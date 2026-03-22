@@ -23,3 +23,8 @@
   - Handled File I/O explicitly writing, appending, and reading buffers via `with open(...)`. Trapping IO exceptions locally via `try/except`.
   - Built physical Python module extensions (`mymath.py`, `calculator.py`) interacting with the central script safely mimicking real-world architectural splitting. 
   - Overhauled Object-Oriented layouts defining Classes (`__init__`), tracking Encapsulation state logic (`self.__balance`), deriving Inheritance, and demonstrating object Polymorphism recursively.
+
+- **Practical 06 Part 1: Search Strategies and Logic** (`practical_06_part1.py`)
+  - Analyzed Uninformed Search mapping logic.
+  - Built `collections.deque` implementations configuring Breadth-First Searches for shortest-path graph routes and complex 2D Maze traversals.
+  - Deployed Depth-First Searches (DFS) tracking internal LIFO stacks dynamically preventing cyclic loops. Mapped comparative DFS/BFS analysis engines.
