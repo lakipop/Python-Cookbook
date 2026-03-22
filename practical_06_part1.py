@@ -8,23 +8,26 @@ Part A – Uninformed Search Algorithms
 """
 1. Breadth-First Search (BFS) Traversal
 """
-# Teaching Note: BFS explores the graph layer-by-layer. It uses a Queue (FIFO), which we build using `collections.deque` for performance.
+# --- TEACHING NOTE: BFS BASE ALGORITHM ---
+# BFS explores the graph layer-by-layer. To do this, it relies on a Queue (First In, First Out). 
+# The first node we see is the first node we process.
 from collections import deque
 
 def bfs(graph, start):
-    visited = set()
-    queue = deque([start])
-    visited.add(start)
+    visited = set()               # 1. Keep track of what we've seen so we don't loop endlessly.
+    queue = deque([start])        # 2. Add our starting node to the line (queue).
+    visited.add(start)            # 3. Immediately mark the start node as 'seen'.
     
     print("BFS Traversal Order: ", end="")
-    while queue:
-        node = queue.popleft() # Pull from the front of the line
+    while queue:                  # 4. As long as there are people in line...
+        node = queue.popleft()    # 5. Take the first person out of the front of the line.
         print(node, end=" ")
         
+        # 6. Check all the neighbors of the node we just popped.
         for neighbor in graph[node]:
             if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor) # Push to the back of the line
+                visited.add(neighbor)      # 7. Mark neighbor as seen.
+                queue.append(neighbor)     # 8. Put them at the BACK of the line.
     print() # newline
 
 # Example Graph
@@ -36,30 +39,35 @@ graph = {
     'E': [],
     'F': []
 }
-
 bfs(graph, 'A')
 
 # %%
 """
 Lab Task 01 - Problem 1: Modify BFS to return the shortest path between two nodes.
 """
-# Teaching Note: To find the path, instead of just storing nodes in our queue, we store the *entire path* taken to reach that node. 
-# Because BFS checks the shortest paths first, the first time we hit the target node, we are guaranteed it's the shortest path.
+# --- TEACHING NOTE: BFS SHORTEST PATH ---
+# Normally, BFS just spits out every node it sees. To find the actual Shortest Path, 
+# instead of just putting a single `node` into the queue, we put a Tuple containing (current_node, history_of_path_taken).
+# Because BFS searches layer 1, then layer 2 equally in all directions... the very first time 
+# you bump into the `goal` node, you are mathematically guaranteed to have taken the shortest route!
 def bfs_shortest_path(graph, start, goal):
     visited = set()
-    # Queue stores tuples of (current_node, [path_history])
+    # Queue stores tuples of (current_node, [path_history]) e.g. ('A', ['A'])
     queue = deque([(start, [start])])
     visited.add(start)
 
     while queue:
-        node, path = queue.popleft()
+        node, path = queue.popleft() # Unpack the tuple
         
+        # If we found the target, immediately return the path we took to get here!
         if node == goal:
             return path
             
         for neighbor in graph[node]:
             if neighbor not in visited:
                 visited.add(neighbor)
+                # We add the neighbor to the back of the line, AND we give them 
+                # a copy of the path that took us here, plus themselves!
                 queue.append((neighbor, path + [neighbor]))
                 
     return None # If no path exists
@@ -70,8 +78,9 @@ print(f"Shortest path from A to E: {bfs_shortest_path(graph, 'A', 'E')}")
 """
 Lab Task 01 - Problem 2: Apply BFS on a 2D grid maze.
 """
-# Teaching Note: A 2D grid is just a graph where nodes are (x,y) coordinates and neighbors are up/down/left/right.
-# 0 = Path, 1 = Wall.
+# --- TEACHING NOTE: 2D GRID MAZE ---
+# A maze is just a graph. Instead of letter names like 'A', the nodes are coordinates (row, column).
+# Instead of checking a dictionary for neighbors, you check adjacent blocks: Up, Down, Left, Right.
 maze = [
     [0, 1, 0, 0, 0],
     [0, 1, 0, 1, 0],
@@ -82,25 +91,28 @@ maze = [
 
 def bfs_maze(maze, start, goal):
     rows, cols = len(maze), len(maze[0])
-    queue = deque([(start, [start])]) # (coordinate, path_taken)
+    # Start queue holding the coordinate and the path history: ((0,0), [(0,0)])
+    queue = deque([(start, [start])]) 
     visited = set()
     visited.add(start)
 
-    # Directions: (row_move, col_move) -> Right, Down, Left, Up
+    # These are mathematical vectors to move [Right, Down, Left, Up] on a 2D grid
     directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
     while queue:
-        (r, c), path = queue.popleft()
+        (r, c), path = queue.popleft() # Current Row & Column, and the Path History
 
         if (r, c) == goal:
             return path
 
+        # For every direction (Up, Down, Left, Right)
         for dr, dc in directions:
             nr, nc = r + dr, c + dc
-            # Ensure within grid bounds and not a wall (0 is path, 1 is wall)
+            # Ensure within grid bounds and not walls (0 is path, 1 is wall)
             if 0 <= nr < rows and 0 <= nc < cols and maze[nr][nc] == 0:
                 if (nr, nc) not in visited:
                     visited.add((nr, nc))
+                    # Add this valid new coordinate to the line, alongside the path updating!
                     queue.append(((nr, nc), path + [(nr, nc)]))
                     
     return None
@@ -113,28 +125,33 @@ print(f"Maze Shortest Path: {maze_path}")
 """
 2. Depth-First Search (DFS) Traversal
 """
-# Teaching Note: DFS explores deeply down one path first using Recursion (which inherently uses the System Call Stack) 
-# or an explicit iterative Stack (LIFO: list.pop()).
+# --- TEACHING NOTE: DFS BASE ALGORITHM ---
+# DFS goes as deep as possible into one branch before checking others. 
+# It relies on a Stack (Last In, First Out). Think of a stack of plates—you always pull off the top plate.
 def dfs_recursive(graph, start, visited=None):
     if visited is None:
         visited = set()
-    visited.add(start)
+    visited.add(start)          # 1. Mark current node as seen.
     print(start, end=" ")
     
+    # 2. Look at neighbors.
     for neighbor in graph[start]:
         if neighbor not in visited:
+             # 3. Immediately dive deep! We pause this function and start a new one on the neighbor.
              dfs_recursive(graph, neighbor, visited)
 
 def dfs_iterative(graph, start):
     visited = set()
-    stack = [start] # Standard Python list acts as a LIFO stack.
+    stack = [start] # 1. Lists natively act as a Stack using .append() and .pop()
     
     while stack:
-        node = stack.pop() # Pulls from the End/Top of the stack
+        node = stack.pop() # 2. Pull from the TOP of the stack (the most recent item)
         if node not in visited:
             print(node, end=" ")
             visited.add(node)
-            # Reverse neighbors so left-most child is popped first (mimicking recursion order)
+            
+            # 3. Add neighbors to the TOP of the stack. We reverse them so the 
+            # left-most child sits on the absolute top of the stack and gets processed first.
             stack.extend(reversed(graph[node]))
 
 print("DFS Traversal (Recursive): ", end="")
@@ -147,8 +164,10 @@ print()
 """
 Lab Task 02 - Problem 1: Compare BFS and DFS traversal outputs
 """
-# Teaching Note: Running them side-by-side proves how BFS maps across horizontal layers ('C' is hit before 'D'), 
-# while DFS shoots straight down a branch until it is exhausted ('D' is hit before 'C').
+# --- TEACHING NOTE: DFS vs BFS ---
+# BFS prints layers: A spreads out and touches B and C (Layer 1) before touching any of their children.
+# DFS acts like tracing a limb on a tree. It hits A, goes to B, and immediately drills down to B's children 
+# (D, E) until a dead end is hit, completely ignoring C until the very end.
 advanced_graph = {
     'A': ['B', 'C'],
     'B': ['D', 'E'],
@@ -159,7 +178,7 @@ advanced_graph = {
     'G': [],
     'H': []
 }
-print("--- Comparison ---")
+print("--- BFS vs DFS Output Comparison ---")
 bfs(advanced_graph, 'A')
 print("DFS Traversal Order: ", end="")
 dfs_iterative(advanced_graph, 'A')
@@ -169,20 +188,25 @@ print()
 """
 Lab Task 02 - Problem 2: Write a program to detect cycles using DFS.
 """
-# Teaching Note: Cycle detection checks whether we run into a node that we are *currently visiting* in our active stack structure.
-# We track 'visited' explicitly by keeping a separate active path memory 'rec_stack'.
+# --- TEACHING NOTE: CYCLE DETECTION ---
+# 'visited' stores EVERY node we ever hit. 
+# 'rec_stack' ONLY stores the nodes we are physically standing on *right now* in our active branch.
 def detect_cycle_dfs(graph, node, visited, rec_stack):
     visited.add(node)
-    rec_stack.add(node) # Mark 'visiting in current path'
+    rec_stack.add(node) # 1. Mark this node as "Currently Active in our Path"
 
     for neighbor in graph.get(node, []):
         if neighbor not in visited:
+            # Dive deeper
             if detect_cycle_dfs(graph, neighbor, visited, rec_stack):
                 return True
-        elif neighbor in rec_stack: # Back-edge found! A cycle exists!
+        # 2. THE SECRET: If the neighbor is already in our *active path memory*, we walked in a circle!
+        elif neighbor in rec_stack: 
             return True
 
-    rec_stack.remove(node) # Remove from active path traversing upward
+    # 3. We hit a dead end and are backtracking upward. 
+    # Take this node off the active path memory, since we are leaving it.
+    rec_stack.remove(node) 
     return False
 
 # Graph WITH a cycle (A -> B -> C -> A)
